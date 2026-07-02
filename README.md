@@ -122,3 +122,5 @@ Graphity currently supports:
 * Mathematical utility functions
 * Continued fractions
 * Rational approximation
+
+Copyright (c) 2023 S Roshini
