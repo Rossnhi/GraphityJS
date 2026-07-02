@@ -5,6 +5,7 @@
  * visualizations with a viewport, animation state, rendering settings and drawable components.
  *
  * @param {Object} [options={}] Configuration options.
+ * @param {HTMLElement|string} [options.parent=document.body] HTML element or element ID that will contain the Graphity canvas.
  * @param {number[]} [options.canvasSize=[600,600]] Canvas size in pixels [width, height].
  * @param {number[]} [options.rangeX=[-3,3]] Initial visible x-axis range.
  * @param {number[]} [options.rangeY=[-3,3]] Initial visible y-axis range.
@@ -16,6 +17,7 @@
  */
 class Graphity {
     constructor({
+        parent = document.body,
         canvasSize = [600, 600],
         rangeX = [-3, 3],
         rangeY = [-3, 3],
@@ -26,6 +28,9 @@ class Graphity {
         },
         gridAnimation = new Animation(false, 0, 1 / 100)
     } = {}) {
+        // canvas
+        this.parent = parent
+
         // p5 sketch
         this.sketch;
         this._createSketch(...canvasSize);
@@ -70,13 +75,24 @@ class Graphity {
     }
 
     _createSketch(canvasWidth, canvasHeight) {
+        // Resolve the parent element
+        const container = typeof this.parent === 'string'
+            ? document.getElementById(this.parent)
+            : this.parent;
+
         const s = (sketch) => {
+            sketch.preload = () => {
+                sketch.loadJSON('data:application/json,{}');
+            }; // defer setup call by p5
             sketch.setup = () => {
-                sketch.createCanvas(canvasWidth, canvasHeight);
+                const canvas = sketch.createCanvas(canvasWidth, canvasHeight);
+                // Pass the resolved element to p5
+                canvas.parent(container);
                 this._draw();
             };
         };
-        this.sketch = new p5(s);
+        // The p5 constructor accepts the container as the second argument
+        this.sketch = new p5(s, container);
     }
 
     _draw() {
@@ -381,8 +397,8 @@ class Graphity {
      * @param {number[]} point Cartesian coordinates of the point [x, y].
      * @returns {Point} The newly created point.
      */
-    addPoint(point) {
-        let point = new Point(point, this);
+    addPoint(pt) {
+        let point = new Point(pt, this);
         this.components.points.push(point);
         return point;
     }
@@ -426,6 +442,14 @@ class Graphity {
                 plotPoint.p.draw();
             }
         }
+    }
+
+    pause() {
+        if (this.sketch) this.sketch.noLoop();
+    }
+
+    resume() {
+        if (this.sketch) this.sketch.loop();
     }
 }
 
@@ -639,7 +663,7 @@ class Point {
         this.c = cart; // object of class cartesian
         this.pointPx = this.c.pointToPixel(this.point.x, this.point.y);
         this.size = size;
-        this.color = color == null ? c.sketch.color(235, 195, 52) : color;
+        this.color = color == null ? this.c.sketch.color(235, 195, 52) : color;
         this.style = style;
         this.dropPerpendiculars = style == "dot" ? dropPerpendiculars : false;
         this.moveWithMouse = false;
@@ -733,7 +757,7 @@ class Plot {
     constructor(func, cart, color = null, step = 1000, style = "line") {
         this.func = func;
         this.c = cart;
-        this.color = color == null ? c.sketch.color(69, 205, 255) : color;
+        this.color = color == null ? this.c.sketch.color(69, 205, 255) : color;
         this.plotPoints = [];
         this.step = step;
         this.style = style;
@@ -901,7 +925,7 @@ class ParametricPlot {
         this.paraRange = paraRange;
         this.func = func;
         this.c = cart;
-        this.color = color == null ? c.sketch.color(69, 205, 255) : color;
+        this.color = color == null ? this.c.sketch.color(69, 205, 255) : color;
         this.plotPoints = [];
         this.step = step;
         this.style = style;
