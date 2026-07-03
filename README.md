@@ -5,7 +5,7 @@
 Graphity is a lightweight JavaScript library for creating beautiful, interactive and animated mathematical visualizations.
 
 Designed for education, demonstrations, and interactive mathematics, Graphity makes it easy to animate Cartesian planes, function plots, parametric curves, transformations, vectors, and geometric objects while providing built-in interactive primitives for creating engaging visual explanations.
-
+Checkout the [website](https://rossnhi.github.io/Graphity-Site/#examples) for more details.
 ---
 
 ## Features
