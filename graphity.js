@@ -29,7 +29,9 @@ class Graphity {
         gridAnimation = new Animation(false, 0, 1 / 100)
     } = {}) {
         // canvas
-        this.parent = parent
+        this.parent = parent;
+        this.visible = false;
+        this.onVisibilityChange = () => { }; // fires everytime visibily of the graphity changes
 
         // p5 sketch
         this.sketch;
@@ -88,6 +90,8 @@ class Graphity {
                 const canvas = sketch.createCanvas(canvasWidth, canvasHeight);
                 // Pass the resolved element to p5
                 canvas.parent(container);
+                canvas.elt.graphity = this;
+                observer.observe(canvas.elt)
                 this._draw();
             };
         };
@@ -438,9 +442,11 @@ class Graphity {
     _drawPlots() {
         for (let plot of this.components.plots) {
             plot.draw();
-            for (let plotPoint of plot.plotPoints) {
-                plotPoint.p.draw();
-            }
+            plot.animation.then(() => {
+                for (let plotPoint of plot.plotPoints) {
+                    plotPoint.p.draw();
+                }
+            });
         }
     }
 
@@ -761,8 +767,8 @@ class Plot {
         this.plotPoints = [];
         this.step = step;
         this.style = style;
-        this.animation = new Animation(false, this.c.rangeX[0], this.c.rangeSpanX / 200);
-        this.analysisMode = false; // make true to plot functionof rationals and irrationals
+        this.animation = new Animation(false, this.c.rangeX[0], this.c.rangeSpanX / 50);
+        this.analysisMode = false; // make true to plot function of rationals and irrationals
         this.data = [];
     }
 
@@ -966,3 +972,11 @@ class ParametricPlot {
     }
 
 }
+
+// utility - for optimization
+const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+        entry.target.graphity.visible = entry.isIntersecting;
+        entry.target.graphity.onVisibilityChange(entry.target.graphity.visible);
+    }
+});
